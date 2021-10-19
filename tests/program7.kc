@@ -1,0 +1,9 @@
+BEGIN
+
+SET x := 10
+SET y := 12
+SET z := x + y * 22
+
+PRINT z
+
+END

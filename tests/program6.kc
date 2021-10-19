@@ -1,0 +1,10 @@
+PROGRAM Program6
+
+DECLARE
+	STRING message
+
+BEGIN
+
+	SET message := "Hello, world!"
+	PRINT message
+END
