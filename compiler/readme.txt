@@ -1,1 +1,0 @@
-You can remove this file after you have created/committed your first file.
