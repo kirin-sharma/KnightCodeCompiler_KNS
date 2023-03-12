@@ -4,11 +4,6 @@
 	<target name="info">
 
 	<echo>This ant script builds the builds/cleans the project.</echo>
-	<echo>build-grammar</echo>
-	<echo>compile-grammar</echo>
-	<echo>compile</echo>
-	<echo>clean</echo>
-	<echo>clean-grammar</echo>
 
     </target>
 
@@ -22,7 +17,7 @@
 			<arg value="KnightCode.g4" />
 
 			<classpath>
-				<pathelement location="/usr/local/lib/antlr-4.11.1-complete.jar" />
+				<pathelement location="/usr/local/lib/jar/antlr-4.12.0-complete.jar" />
 			</classpath>
 
 		</java>
@@ -31,7 +26,7 @@
 
 	<target name="compile-grammar">
 		<echo>Compiling the ANTLR .java source files</echo>
-		<javac includeantruntime="false" classpath="/usr/local/lib/antlr-4.11.1-complete.jar" srcdir="lexparse" destdir="." />
+		<javac includeantruntime="false" classpath="/usr/local/lib/jar/antlr-4.12.0-complete.jar" srcdir="lexparse" destdir="." />
 	</target>
 
 
@@ -49,7 +44,7 @@
 	<target name="compile">
 		<echo>Compiling the ANTLR .java source files</echo>
 		<javac includeantruntime="false" 
-			classpath=".;/usr/local/lib/antlr-4.11.1-complete.jar;/usr/local/lib/asm-9.4.jar" 
+			classpath=".;/usr/local/lib/jar/antlr-4.12.0-complete.jar;/usr/local/lib/jar/asm-9.4.jar" 
 			srcdir="compiler" 
 			destdir="." />
 	</target>
