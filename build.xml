@@ -5,7 +5,7 @@
 
 	<echo>This ant script builds the builds/cleans the project.</echo>
 	<echo>build-grammar -runs antlr and generates the java files</echo>
-	<echo>compile-grammar -compiles all the java for antlr and placess them in lexparse directory</echo>
+	<echo>compile-grammar -compiles all the java for antlr and places them in lexparse directory</echo>
 	<echo>compile -compiles all of the java files in the compiler directory</echo>
 	<echo>clean-grammar -removes all compiled java files for the grammar in the lexparse directory</echo>
 	<echo>clean -removes all compiled java files in the compile directory</echo>
