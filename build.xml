@@ -22,7 +22,7 @@
 			<arg value="KnightCode.g4" />
 
 			<classpath>
-				<pathelement location="/usr/local/lib/jar/antlr-4.12.0-complete.jar" />
+				<pathelement location="/usr/local/lib/antlr-4.13.1-complete.jar" />
 			</classpath>
 
 		</java>
@@ -31,7 +31,7 @@
 
 	<target name="compile-grammar">
 		<echo>Compiling the ANTLR .java source files</echo>
-		<javac includeantruntime="false" classpath="/usr/local/lib/jar/antlr-4.12.0-complete.jar" srcdir="lexparse" destdir="." />
+		<javac includeantruntime="false" classpath="/usr/local/lib/antlr-4.13.1-complete.jar" srcdir="lexparse" destdir="." />
 	</target>
 
 
@@ -43,13 +43,13 @@
 			<fileset dir="lexparse" includes="**/*.interp"/>
 			<fileset dir="lexparse" includes="**/*.tokens"/>
 		</delete>
-
+		<delete dir="lexparse" />
 	</target>
 
 	<target name="compile">
 		<echo>Compiling the ANTLR .java source files</echo>
 		<javac includeantruntime="false" 
-			classpath=".;/usr/local/lib/jar/antlr-4.12.0-complete.jar;/usr/local/lib/jar/asm-9.4.jar" 
+			classpath=".;/usr/local/lib/antlr-4.13.1-complete.jar;/usr/local/lib/asm-9.6.jar" 
 			srcdir="compiler" 
 			destdir="." />
 	</target>
