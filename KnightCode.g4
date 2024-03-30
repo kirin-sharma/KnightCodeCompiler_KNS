@@ -36,7 +36,7 @@ comp : GT
 	 ;
 print : 'PRINT' (STRING | ID) ;
 read : 'READ' ID ;
-decision : 'IF' (NUMBER | ID) comp (NUMBER | ID) 'THEN' stat+ ('ELSE' stat+)* 'ENDIF' ;
+decision : 'IF' (NUMBER | ID) comp (NUMBER | ID) 'THEN' stat+ ('ELSE' stat+)? 'ENDIF' ;
 loop : 'WHILE' (NUMBER | ID) comp (NUMBER | ID) 'DO' stat+ 'ENDWHILE' ;
 
 //LEXER RULES
