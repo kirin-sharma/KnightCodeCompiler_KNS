@@ -1,1 +1,0 @@
-# KnightCodeCompiler_KNS
