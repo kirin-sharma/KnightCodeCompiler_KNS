@@ -1,3 +1,5 @@
 *.class
 *.tokens
 *.interp
+*.kc
+lexparse/
