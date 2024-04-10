@@ -2,7 +2,6 @@ package compiler;
 
 import java.util.HashMap;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.objectweb.asm.*;
 
 /**
@@ -19,7 +18,6 @@ import org.objectweb.asm.*;
 public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 {
     
-    @SuppressWarnings("rawtypes")
     public HashMap<String, Variable> symbolTable; // the symbol table for all variables
     public int indexCount; // keeps track of current memory location for variable assignment
     public String outputName; // the name of the output file
@@ -30,7 +28,6 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     /**
      * Preferred constructor initializes filename
      */
-    @SuppressWarnings("rawtypes")
     public CustomVisitor(String fileName)
     {
         symbolTable = new HashMap<String, Variable>(); 
@@ -64,11 +61,13 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         
         if(dataType.equals("INTEGER"))
         {
-            symbolTable.put(identifier, new Variable<Integer>("Integer")); // declares a new Integer in the symbol table with a null value
+            symbolTable.put(identifier, new Variable("Integer", indexCount)); // declares a new Integer in the symbol table with a free memory location
+            indexCount++; 
         }
         else if(dataType.equals("STRING"))
         {
-            symbolTable.put(identifier, new Variable<String>("String")); // declares a new String in the symbol table with a null value
+            symbolTable.put(identifier, new Variable("String", indexCount)); // declares a new String in the symbol table with a free memory location
+            indexCount++; 
         }
 
         // System.out.println("Created a variable.");
@@ -77,7 +76,6 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     } // end visitVariable
 
 
-    @SuppressWarnings("unchecked")
     @Override
     /**
      * Contains ASM code to assign a value to a variable
@@ -93,34 +91,23 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             // If val is not a single integer, visit children and perform necessary operations
             if(ctx.getChild(3).getChildCount() != 1)
             {
-                symbolTable.get(identifier).setMemoryLocation(indexCount);
-                indexCount++;
                 visit(ctx.getChild(3));
                 mv.visitVarInsn(Opcodes.ISTORE, symbolTable.get(identifier).getMemoryLocation());
             }
             else 
             {
-                // Update symbol table
-                Integer value = Integer.parseInt(val);
-                symbolTable.get(identifier).setData(value);
-                symbolTable.get(identifier).setMemoryLocation(indexCount);
-                indexCount++; 
-
                 // Load integer into memory
-                mv.visitLdcInsn((int) symbolTable.get(identifier).getData());
+                Integer value = Integer.parseInt(val);
+                mv.visitLdcInsn(value);
                 mv.visitVarInsn(Opcodes.ISTORE, symbolTable.get(identifier).getMemoryLocation());
             }
         }
         else
         {
+            // Load String into memory 
             String value = ctx.getChild(3).getText();
-            symbolTable.get(identifier).setData(value);
-            symbolTable.get(identifier).setMemoryLocation(indexCount);
-            indexCount++; 
-
-           // Load String into memory
-           mv.visitLdcInsn(symbolTable.get(identifier).getData());
-           mv.visitVarInsn(Opcodes.ASTORE, symbolTable.get(identifier).getMemoryLocation());
+            mv.visitLdcInsn(value);
+            mv.visitVarInsn(Opcodes.ASTORE, symbolTable.get(identifier).getMemoryLocation());
         }
 
         return visitChildren(ctx);
