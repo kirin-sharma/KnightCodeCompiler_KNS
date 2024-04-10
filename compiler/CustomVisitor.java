@@ -1,6 +1,8 @@
 package compiler;
 
 import java.util.HashMap;
+
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.objectweb.asm.*;
 
 /**
@@ -24,6 +26,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     public ClassWriter cw; // the ASM class writer used in various methods to write bytecode
     public MethodVisitor mv; // the ASM method visitor used in various methods to write bytecode
 
+
     /**
      * Preferred constructor initializes filename
      */
@@ -35,22 +38,25 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         outputName = fileName;
     } // end preferred constructor
 
-
+    
     @Override
+    /**
+     * Contains ASM code to create the class and main method of the .class file
+     */
     public T visitFile(lexparse.KnightCodeParser.FileContext ctx) 
     {
-        // System.out.println("Write header of .class file");
-        // Create class and main method for header of class file
         cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, outputName, null, "java/lang/Object",null);
         mv = cw.visitMethod(Opcodes.ACC_PUBLIC+Opcodes.ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
         mv.visitCode();
-       
         return visitChildren(ctx); 
     } // end visitFile
 
 
     @Override
+    /**
+     * Contains ASM code to declare a variable
+     */
     public T visitVariable(lexparse.KnightCodeParser.VariableContext ctx) 
     {
         String dataType = ctx.getChild(0).getText(); // gets the left grandchild of the variable subtree, which is the data type
@@ -73,21 +79,37 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
     @SuppressWarnings("unchecked")
     @Override
+    /**
+     * Contains ASM code to assign a value to a variable
+     */
     public T visitSetvar(lexparse.KnightCodeParser.SetvarContext ctx)
     {
         String identifier = ctx.getChild(1).getText();
 
         if(symbolTable.get(identifier).getDataType().equals("Integer"))
         {
-            // Update symbol table
-           Integer value = Integer.parseInt(ctx.getChild(3).getText());
-           symbolTable.get(identifier).setData(value);
-           symbolTable.get(identifier).setMemoryLocation(indexCount);
-           indexCount++; 
+            String val = ctx.getChild(3).getText();
 
-           // Load integer into memory
-           mv.visitLdcInsn((int) symbolTable.get(identifier).getData());
-           mv.visitVarInsn(Opcodes.ISTORE, symbolTable.get(identifier).getMemoryLocation());
+            // If val is not a single integer, visit children and perform necessary operations
+            if(ctx.getChild(3).getChildCount() != 1)
+            {
+                symbolTable.get(identifier).setMemoryLocation(indexCount);
+                indexCount++;
+                visit(ctx.getChild(3));
+                mv.visitVarInsn(Opcodes.ISTORE, symbolTable.get(identifier).getMemoryLocation());
+            }
+            else 
+            {
+                // Update symbol table
+                Integer value = Integer.parseInt(val);
+                symbolTable.get(identifier).setData(value);
+                symbolTable.get(identifier).setMemoryLocation(indexCount);
+                indexCount++; 
+
+                // Load integer into memory
+                mv.visitLdcInsn((int) symbolTable.get(identifier).getData());
+                mv.visitVarInsn(Opcodes.ISTORE, symbolTable.get(identifier).getMemoryLocation());
+            }
         }
         else
         {
@@ -106,6 +128,9 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
 
     @Override
+    /**
+     * Contains ASM code to print either a variable or a string literal
+     */
     public T visitPrint(lexparse.KnightCodeParser.PrintContext ctx)
     {
         String identifier = ctx.getChild(1).getText();
@@ -136,22 +161,20 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
         }
         
-
-        // System.out.println("Printed the value.");
-
         return visitChildren(ctx);
     } // end visitPrint
 
-    
+
+    /**
+     * Contains ASM code to write the footer of a class file
+     */
     public void writeFooter()
     {
-        //System.out.println("Wrote the footer of the .class file.");
-
         mv.visitInsn(Opcodes.RETURN);
         mv.visitMaxs(0,0);
         mv.visitEnd();
-
     } // end writeFooter
+
 
     /**
      * Returns the .class file as an array of bytes
@@ -161,5 +184,122 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     {
         return cw.toByteArray();
     } // end getByteArray
+
+
+    @Override
+    /** 
+     * Contains ASM code to add numbers, including logic to handle multiple additions
+     */ 
+    public T visitAddition(lexparse.KnightCodeParser.AdditionContext ctx) 
+    { 
+        String operand1 = null;
+        String operand2 = ctx.getChild(2).getText(); // second operand
+
+        // If this is final operation, get both children and add them together
+        if(ctx.getChild(0).getChildCount() == 1)
+        {
+            operand1 = ctx.getChild(0).getText();
+
+            // Check if first operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand1))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
+            }
+
+            // Check if second operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand2))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
+            }
+
+            mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
+        }
+        else
+        {
+            visit(ctx.getChild(0)); // if more nodes to traverse, visit the left child and load addition result to top of stack
+
+            // Check if second operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand2))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
+            }            
+            
+            mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
+            return null;
+        } 
+
+        return null;
+    }
+
+
+    @Override
+    /**
+     * Contains ASM code to multiply two integers, including logic to handle multiple multiplications
+     */
+    public T visitMultiplication(lexparse.KnightCodeParser.MultiplicationContext ctx) 
+    {
+        String operand1 = null;
+        String operand2 = ctx.getChild(2).getText(); // second operand
+
+        // If this is final operation, get both children and add them together
+        if(ctx.getChild(0).getChildCount() == 1)
+        {
+            operand1 = ctx.getChild(0).getText();
+
+            // Check if first operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand1))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
+            }
+
+            // Check if second operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand2))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
+            }
+
+            mv.visitInsn(Opcodes.IMUL); // add two operands and have result on top of stack
+        }
+        else
+        {
+            visit(ctx.getChild(0)); // if more nodes to traverse, visit the left child and load addition result to top of stack
+
+            // Check if second operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand2))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
+            }            
+            
+            mv.visitInsn(Opcodes.IMUL); // multiply two operands and have result on top of stack
+            return null;
+        } 
+
+        return null;
+    } // end visitMultiplication
+
 
 } // end class
