@@ -27,6 +27,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     /**
      * Preferred constructor initializes filename
      */
+    @SuppressWarnings("rawtypes")
     public CustomVisitor(String fileName)
     {
         symbolTable = new HashMap<String, Variable>(); 
@@ -70,6 +71,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     } // end visitVariable
 
 
+    @SuppressWarnings("unchecked")
     @Override
     public T visitSetvar(lexparse.KnightCodeParser.SetvarContext ctx)
     {
@@ -108,16 +110,27 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     {
         String identifier = ctx.getChild(1).getText();
 
+        // Check if what is being printed is a string literal
+        if(!symbolTable.containsKey(identifier))
+        {
+            // Print a String literal
+            mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn(identifier);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            return visitChildren(ctx);
+        }
+
+        // Prints a variable
         if(symbolTable.get(identifier).getDataType().equals("Integer"))
         {
-            // Print an integer
+            // Print an integer variable
             mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
             mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(identifier).getMemoryLocation());
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         }
         else
         {
-            // Print a String
+            // Print a String variable
             mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
             mv.visitVarInsn(Opcodes.ALOAD, symbolTable.get(identifier).getMemoryLocation());
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
