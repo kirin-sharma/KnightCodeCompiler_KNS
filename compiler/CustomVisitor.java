@@ -179,14 +179,10 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */ 
     public T visitAddition(lexparse.KnightCodeParser.AdditionContext ctx) 
     { 
-        String operand1 = null;
-        String operand2 = ctx.getChild(2).getText(); // second operand
-
-        // If this is final operation, get both children and add them together
+        // Load the first operand onto the stack (left subtree traversal)
         if(ctx.getChild(0).getChildCount() == 1)
         {
-            operand1 = ctx.getChild(0).getText();
-
+            String operand1 = ctx.getChild(0).getText();
             // Check if first operand is a variable or literal integer and load onto stack
             if(symbolTable.containsKey(operand1))
             {
@@ -196,23 +192,16 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             {
                 mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
             }
-
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
-            }
-
-            mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
         }
-        else
+        else // visits the left child recursively
         {
-            visit(ctx.getChild(0)); // if more nodes to traverse, visit the left child and load addition result to top of stack
+            visit(ctx.getChild(0));
+        }
 
+        // Load the second operand onto the stack (right subtree traversal)
+        if(ctx.getChild(2).getChildCount() == 1)
+        {
+            String operand2 = ctx.getChild(2).getText();
             // Check if second operand is a variable or literal integer and load onto stack
             if(symbolTable.containsKey(operand2))
             {
@@ -220,15 +209,19 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             }
             else
             {
-                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
-            }            
-            
-            mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
-            return null;
-        } 
+                mv.visitLdcInsn(Integer.parseInt(operand2));
+            }
+        }
+        else // visits right child recursively
+        {
+            visit(ctx.getChild(2));
+        }
+
+        mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
 
         return null;
-    }
+
+    } // end visitAddition
 
 
     @Override
@@ -237,14 +230,10 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */
     public T visitMultiplication(lexparse.KnightCodeParser.MultiplicationContext ctx) 
     {
-        String operand1 = null;
-        String operand2 = ctx.getChild(2).getText(); // second operand
-
-        // If this is final operation, get both children and add them together
+        // Load the first operand onto the stack (left subtree traversal)
         if(ctx.getChild(0).getChildCount() == 1)
         {
-            operand1 = ctx.getChild(0).getText();
-
+            String operand1 = ctx.getChild(0).getText();
             // Check if first operand is a variable or literal integer and load onto stack
             if(symbolTable.containsKey(operand1))
             {
@@ -254,23 +243,16 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             {
                 mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
             }
-
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
-            }
-
-            mv.visitInsn(Opcodes.IMUL); // add two operands and have result on top of stack
         }
-        else
+        else // visits the left child recursively
         {
-            visit(ctx.getChild(0)); // if more nodes to traverse, visit the left child and load addition result to top of stack
+            visit(ctx.getChild(0));
+        }
 
+        // Load the second operand onto the stack (right subtree traversal)
+        if(ctx.getChild(2).getChildCount() == 1)
+        {
+            String operand2 = ctx.getChild(2).getText();
             // Check if second operand is a variable or literal integer and load onto stack
             if(symbolTable.containsKey(operand2))
             {
@@ -278,15 +260,64 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             }
             else
             {
-                mv.visitLdcInsn(Integer.parseInt(operand2)); // load the second integer onto the stack
-            }            
-            
-            mv.visitInsn(Opcodes.IMUL); // multiply two operands and have result on top of stack
-            return null;
-        } 
+                mv.visitLdcInsn(Integer.parseInt(operand2));
+            }
+        }
+        else // visits right child recursively
+        {
+            visit(ctx.getChild(2));
+        }
+
+        mv.visitInsn(Opcodes.IMUL); // multiply two operands and have result on top of stack
 
         return null;
     } // end visitMultiplication
 
+
+    @Override
+    public T visitSubtraction(lexparse.KnightCodeParser.SubtractionContext ctx)
+    {
+        // Load the first operand onto the stack (left subtree traversal)
+        if(ctx.getChild(0).getChildCount() == 1)
+        {
+            String operand1 = ctx.getChild(0).getText();
+            // Check if first operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand1))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
+            }
+        }
+        else // visits the left child recursively
+        {
+            visit(ctx.getChild(0));
+        }
+
+        // Load the second operand onto the stack (right subtree traversal)
+        if(ctx.getChild(2).getChildCount() == 1)
+        {
+            String operand2 = ctx.getChild(2).getText();
+            // Check if second operand is a variable or literal integer and load onto stack
+            if(symbolTable.containsKey(operand2))
+            {
+                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
+            }
+            else
+            {
+                mv.visitLdcInsn(Integer.parseInt(operand2));
+            }
+        }
+        else // visits right child recursively
+        {
+            visit(ctx.getChild(2));
+        }
+
+        mv.visitInsn(Opcodes.ISUB); // subtract two operands and have result on top of stack
+
+        return null;
+    }
 
 } // end class
