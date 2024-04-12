@@ -11,40 +11,22 @@ package compiler;
  * Spring 2024
  */
 
-public class Variable<T>
+public class Variable
 {
 
-    public T data; // the value of the variable
+    //public T data; // the value of the variable
     public String dataType; // the data type of the variable
-    public int memoryLocation;
+    public int memoryLocation; // the memory location of the variable in bytecode
 
     /**
-     * Preferred constructor initializes the data to null
+     * Preferred constructor initializes a variable with 
      * @param data
      */
-    public Variable(String type)
+    public Variable(String type, int memoryLocation)
     {
-        data = null;
         dataType = type;
+        this.memoryLocation = memoryLocation;
     } // end preferred constructor
-
-    /**
-     * Setter for data
-     * @param data
-     */
-    public void setData(T data)
-    {
-        this.data = data;
-    } // end setData
-
-    /**
-     * Getter for data
-     * @return
-     */
-    public T getData()
-    {
-        return data;
-    } // end getData
 
     /**
      * Getter for dataType
@@ -54,15 +36,6 @@ public class Variable<T>
     {
         return dataType;
     } // end getDataType
-
-    /**
-     * Setter for memoryLocation
-     * @param location
-     */
-    public void setMemoryLocation(int location)
-    {
-        memoryLocation = location;
-    } // end setMemoryLocation
 
     /**
      * Getter for memoryLocation
