@@ -69,8 +69,6 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             symbolTable.put(identifier, new Variable("String", indexCount)); // declares a new String in the symbol table with a free memory location
             indexCount++; 
         }
-
-        // System.out.println("Created a variable.");
         
         return visitChildren(ctx); 
     } // end visitVariable
@@ -410,5 +408,67 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         return visitChildren(ctx); 
     }
 
+
+    @Override 
+    public T visitDecision(lexparse.KnightCodeParser.DecisionContext ctx) 
+    {
+        // Load 2 values to be compared onto stack
+        String term1 = ctx.getChild(1).getText();
+        String term2 = ctx.getChild(3).getText();
+        if(!symbolTable.containsKey(term1))
+        {
+            mv.visitLdcInsn(Integer.parseInt(term1)); // load an explicit integer onto stack
+        }
+        else
+        {
+            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term1).getMemoryLocation()); // load a variable value onto stack
+        }
+        if(!symbolTable.containsKey(term2))
+        {
+            mv.visitLdcInsn(Integer.parseInt(term2)); // load an explicit integer onto stack
+        }
+        else
+        {
+            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term2).getMemoryLocation());;
+        }                     
+        
+        Label falseLabel = new Label(); // label for if comparison output is false
+        Label trueLabel = new Label(); // label for if the comparison output is true
+        Label endLabel = new Label();
+
+        // Determine correct comparison operation and write to class
+        String comparator = ctx.getChild(2).getText();
+        if(comparator.equals(">"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPGT, trueLabel);
+        }
+        else if(comparator.equals("<"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPLT, trueLabel);
+        }
+        else if(comparator.equals("="))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPEQ, trueLabel);
+        }
+        else if(comparator.equals("<>"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPNE, trueLabel);
+        }
+        mv.visitJumpInsn(Opcodes.GOTO, falseLabel); // will only be executed if the comparison returned false
+
+        mv.visitLabel(trueLabel);
+        visit(ctx.getChild(5)); // Visit what you would do if comparison returns true
+        mv.visitJumpInsn(Opcodes.GOTO, endLabel);
+
+        mv.visitLabel(falseLabel);
+        // If there is an else statement following, visit what you would do otherwise
+        if(ctx.getChild(6).getText().equals("ELSE"))
+            visit(ctx.getChild(7));
+
+        mv.visitLabel(endLabel); // Label indicating end of comparison
+
+        return null; 
+
+    } // end visitDecision
 
 } // end class
