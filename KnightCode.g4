@@ -22,8 +22,8 @@ setvar : 'SET' ID ASSIGN (expr | STRING) ;
 expr : '(' expr ')'		# Parenthesis		
 	 | expr MUL expr	# Multiplication
 	 | expr DIV expr	# Division
-	 | expr ADD expr    # Addition
 	 | expr SUB expr    # Subtraction
+	 | expr ADD expr    # Addition
 	 | expr comp expr   # Comparison
 	 | NUMBER           # Number
 	 | ID   		  	# Id														
