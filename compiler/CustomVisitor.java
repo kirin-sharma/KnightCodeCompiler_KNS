@@ -396,12 +396,12 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
         // Get the next string or int depending on what the variable type we are reading into is
         Variable var = symbolTable.get(ctx.getChild(1).getText());
-        if(var.getDataType().equals("STRING"))
+        if(var.getDataType().equals("String"))
         {
-            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Scanner", "nextLine", "()A", false);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Scanner", "nextLine", "()Ljava/lang/String;", false);
             mv.visitVarInsn(Opcodes.ASTORE, var.getMemoryLocation());
         }
-        else
+        else if(var.getDataType().equals("Integer"))
         {
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Scanner", "nextInt", "()I", false);
             mv.visitVarInsn(Opcodes.ISTORE, var.getMemoryLocation());
