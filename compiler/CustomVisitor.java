@@ -104,6 +104,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         {
             // Load String into memory 
             String value = ctx.getChild(3).getText();
+            value = value.replace("\"", ""); // remove quotation marks from string
             mv.visitLdcInsn(value);
             mv.visitVarInsn(Opcodes.ASTORE, symbolTable.get(identifier).getMemoryLocation());
         }
@@ -124,6 +125,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(!symbolTable.containsKey(identifier))
         {
             // Print a String literal
+            identifier = identifier.replace("\"", ""); // remove quotation marks from string
             mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
             mv.visitLdcInsn(identifier);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
