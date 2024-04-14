@@ -4,7 +4,6 @@ import java.io.IOException;
 //ANTLR packages
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
-import org.antlr.v4.gui.Trees;
 
 import lexparse.*;
 
@@ -38,7 +37,6 @@ import lexparse.*;
             String outputName = args[1]; // the name of the output file read from command line arguments
 
             ParseTree tree = parser.file();  //set the start location of the parser
-            Trees.inspect(tree, parser);  //displays the parse tree
             
             CustomVisitor<Void> visitor = new CustomVisitor<Void>(outputName); // Creates a new CustomVisitor
             visitor.visit(tree); // Traverses tree and writes bytecode
