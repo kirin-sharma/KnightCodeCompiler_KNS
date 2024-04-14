@@ -108,7 +108,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
             mv.visitVarInsn(Opcodes.ASTORE, symbolTable.get(identifier).getMemoryLocation());
         }
 
-        return visitChildren(ctx);
+        return null;
     } // end visitSetVar
 
 
@@ -156,7 +156,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     public void writeFooter()
     {
         mv.visitInsn(Opcodes.RETURN);
-        mv.visitMaxs(0,0);
+        mv.visitMaxs(0,10);
         mv.visitEnd();
     } // end writeFooter
 
@@ -177,6 +177,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */ 
     public T visitAddition(lexparse.KnightCodeParser.AdditionContext ctx) 
     { 
+        
         // Load the first operand onto the stack (left subtree traversal)
         if(ctx.getChild(0).getChildCount() == 1)
         {
@@ -470,5 +471,95 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         return null; 
 
     } // end visitDecision
+
+
+    @Override
+    /**
+     * Override of the visitLoop method contains logic to implement a loop using ASM
+     */
+    public T visitLoop(lexparse.KnightCodeParser.LoopContext ctx) 
+    {    
+
+        Label loopHeader = new Label();
+        Label loopEnd = new Label();
+
+
+        mv.visitLabel(loopHeader);
+        // Load 2 values to be compared onto stack
+        String term1 = ctx.getChild(1).getText();
+        String term2 = ctx.getChild(3).getText();
+        if(!symbolTable.containsKey(term1))
+        {
+            mv.visitLdcInsn(Integer.parseInt(term1)); // load an explicit integer onto stack
+        }
+        else
+        {
+            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term1).getMemoryLocation()); // load a variable value onto stack
+        }
+        if(!symbolTable.containsKey(term2))
+        {
+            mv.visitLdcInsn(Integer.parseInt(term2)); // load an explicit integer onto stack
+        }
+        else
+        {
+            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term2).getMemoryLocation());;
+        }      
+        // Determine correct comparison operation and write to class
+        String comparator = ctx.getChild(2).getText();
+        if(comparator.equals(">"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPLE, loopEnd);
+        }
+        else if(comparator.equals("<"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPGE, loopEnd);
+        }
+        else if(comparator.equals("="))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPNE, loopEnd);
+        }
+        else if(comparator.equals("<>"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPEQ, loopEnd);
+        }
+
+        visitChildren(ctx);
+        mv.visitJumpInsn(Opcodes.GOTO, loopHeader); // if it gets here, then loop to top and do comparison again
+
+        
+        mv.visitLabel(loopEnd);
+        return null;
+    }
+
+
+    // /**
+    //  * Helper function writes the correct comparison operation to the .class file assuming the two operands are loaded onto stack already
+    //  * @param trueLabel the label to visit if the comparison is true
+    //  * @param falseLabel the label to visit if the comparison is true
+    //  * @param comparator the string representing the comparison operator
+    //  */
+    // public void writeCompareOperation(Label trueLabel, Label falseLabel, String comparator)
+    // {
+    //     if(comparator.equals(">"))
+    //     {
+    //         mv.visitJumpInsn(Opcodes.IF_ICMPGT, trueLabel);
+    //     }
+    //     else if(comparator.equals("<"))
+    //     {
+    //         mv.visitJumpInsn(Opcodes.IF_ICMPLT, trueLabel);
+    //     }
+    //     else if(comparator.equals("="))
+    //     {
+    //         mv.visitJumpInsn(Opcodes.IF_ICMPEQ, trueLabel);
+    //     }
+    //     else if(comparator.equals("<>"))
+    //     {
+    //         mv.visitJumpInsn(Opcodes.IF_ICMPNE, trueLabel);
+    //     }
+    //     mv.visitJumpInsn(Opcodes.GOTO, falseLabel);
+    // }
+
+    @Override public T visitStat(lexparse.KnightCodeParser.StatContext ctx) { return visit(ctx.getChild(0)); }
+
 
 } // end class
