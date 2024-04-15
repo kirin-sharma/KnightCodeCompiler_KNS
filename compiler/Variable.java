@@ -14,7 +14,6 @@ package compiler;
 public class Variable
 {
 
-    //public T data; // the value of the variable
     public String dataType; // the data type of the variable
     public int memoryLocation; // the memory location of the variable in bytecode
 
