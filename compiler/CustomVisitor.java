@@ -1,7 +1,6 @@
 package compiler;
 
 import java.util.HashMap;
-
 import org.objectweb.asm.*;
 
 /**
@@ -14,7 +13,6 @@ import org.objectweb.asm.*;
  * Spring 2024
  */
 
-
 public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 {
     
@@ -22,11 +20,10 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     public int indexCount; // keeps track of current memory location for variable assignment
     public String outputName; // the name of the output file
     public ClassWriter cw; // the ASM class writer used in various methods to write bytecode
-    public MethodVisitor mv; // the ASM method visitor used in various methods to write bytecode
-
+    public MethodVisitor mv; // the ASM method visitor used in various methods to write bytecode for the main method
 
     /**
-     * Preferred constructor initializes filename
+     * Preferred constructor initializes filename and other field variables to default values
      */
     public CustomVisitor(String fileName)
     {
@@ -52,7 +49,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
     @Override
     /**
-     * Contains ASM code to declare a variable
+     * Contains logic to declare a variable in bytecode using ASM
      */
     public T visitVariable(lexparse.KnightCodeParser.VariableContext ctx) 
     {
@@ -152,82 +149,44 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     } // end visitPrint
 
 
-    /**
-     * Contains ASM code to write the footer of a class file
-     */
-    public void writeFooter()
-    {
-        mv.visitInsn(Opcodes.RETURN);
-        mv.visitMaxs(0,10);
-        mv.visitEnd();
-    } // end writeFooter
-
-
-    /**
-     * Returns the .class file as an array of bytes
-     * @return
-     */
-    public byte[] getByteArray()
-    {
-        return cw.toByteArray();
-    } // end getByteArray
-
-
     @Override
     /** 
-     * Contains ASM code to add numbers, including logic to handle multiple additions
+     * Contains logic to add numbers in bytecode, including logic to handle multiple additions
+     * Utilizes a postorder traversal
      */ 
     public T visitAddition(lexparse.KnightCodeParser.AdditionContext ctx) 
     { 
-        
         // Load the first operand onto the stack (left subtree traversal)
         if(ctx.getChild(0).getChildCount() == 1)
         {
             String operand1 = ctx.getChild(0).getText();
-            // Check if first operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand1))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
-            }
+            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
         }
-        else // visits the left child recursively
+        else 
         {
-            visit(ctx.getChild(0));
+            visit(ctx.getChild(0)); // visits the left child recursively
         }
 
         // Load the second operand onto the stack (right subtree traversal)
         if(ctx.getChild(2).getChildCount() == 1)
         {
             String operand2 = ctx.getChild(2).getText();
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2));
-            }
+            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
         }
-        else // visits right child recursively
+        else 
         {
-            visit(ctx.getChild(2));
+            visit(ctx.getChild(2)); // visits right child recursively
         }
 
         mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
-
         return null;
-
     } // end visitAddition
 
 
     @Override
     /**
-     * Contains ASM code to multiply two integers, including logic to handle multiple multiplications
+     * Contains logic to multiply two integers in bytecode, including logic to handle multiple multiplications
+     * Utilizes a postorder traversal
      */
     public T visitMultiplication(lexparse.KnightCodeParser.MultiplicationContext ctx) 
     {
@@ -235,15 +194,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(0).getChildCount() == 1)
         {
             String operand1 = ctx.getChild(0).getText();
-            // Check if first operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand1))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
-            }
+            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
         }
         else // visits the left child recursively
         {
@@ -254,15 +205,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(2).getChildCount() == 1)
         {
             String operand2 = ctx.getChild(2).getText();
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2));
-            }
+            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
         }
         else // visits right child recursively
         {
@@ -270,14 +213,14 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         }
 
         mv.visitInsn(Opcodes.IMUL); // multiply two operands and have result on top of stack
-
         return null;
     } // end visitMultiplication
 
 
     @Override
     /**
-     * Contains ASM code to multiply two integers, including logic to handle multiple multiplications
+     * Contains logic to subtract two integers, in bytecode including logic to handle multiple subtractions
+     * Utilizes a postorder traversal
      */
     public T visitSubtraction(lexparse.KnightCodeParser.SubtractionContext ctx)
     {
@@ -285,15 +228,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(0).getChildCount() == 1)
         {
             String operand1 = ctx.getChild(0).getText();
-            // Check if first operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand1))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
-            }
+            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
         }
         else // visits the left child recursively
         {
@@ -304,15 +239,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(2).getChildCount() == 1)
         {
             String operand2 = ctx.getChild(2).getText();
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2));
-            }
+            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
         }
         else // visits right child recursively
         {
@@ -320,13 +247,14 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         }
 
         mv.visitInsn(Opcodes.ISUB); // subtract two operands and have result on top of stack
-
         return null;
     } // end visitSubtraction
 
+
     @Override
     /**
-     * Contains ASM code to multiply two integers, including logic to handle multiple multiplications
+     * Contains logic to divide two integers in bytecode, including logic to handle multiple divisions
+     * Utilizes a postorder traversal
      */
     public T visitDivision(lexparse.KnightCodeParser.DivisionContext ctx)
     {
@@ -334,15 +262,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(0).getChildCount() == 1)
         {
             String operand1 = ctx.getChild(0).getText();
-            // Check if first operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand1))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand1).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand1)); // load the leftmost integer onto the stack
-            }
+            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
         }
         else // visits the left child recursively
         {
@@ -353,15 +273,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         if(ctx.getChild(2).getChildCount() == 1)
         {
             String operand2 = ctx.getChild(2).getText();
-            // Check if second operand is a variable or literal integer and load onto stack
-            if(symbolTable.containsKey(operand2))
-            {
-                mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(operand2).getMemoryLocation());
-            }
-            else
-            {
-                mv.visitLdcInsn(Integer.parseInt(operand2));
-            }
+            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
         }
         else // visits right child recursively
         {
@@ -369,14 +281,13 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         }
 
         mv.visitInsn(Opcodes.IDIV); // subtract two operands and have result on top of stack
-
         return null;
     } // end visitDivision
 
 
     @Override 
     /**
-     * Contains logic to write bytecode to read in an integer or string to a variable
+     * Contains logic to write bytecode to read in an integer or string value to a variable
      */
     public T visitRead(lexparse.KnightCodeParser.ReadContext ctx) 
     {
@@ -409,159 +320,145 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         }
 
         return visitChildren(ctx); 
-    }
+    } // end visitRead
 
 
     @Override 
+    /**
+     * Contains logic to compile an if else statement to bytecode using ASM
+     */
     public T visitDecision(lexparse.KnightCodeParser.DecisionContext ctx) 
     {
         // Load 2 values to be compared onto stack
         String term1 = ctx.getChild(1).getText();
         String term2 = ctx.getChild(3).getText();
-        if(!symbolTable.containsKey(term1))
-        {
-            mv.visitLdcInsn(Integer.parseInt(term1)); // load an explicit integer onto stack
-        }
-        else
-        {
-            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term1).getMemoryLocation()); // load a variable value onto stack
-        }
-        if(!symbolTable.containsKey(term2))
-        {
-            mv.visitLdcInsn(Integer.parseInt(term2)); // load an explicit integer onto stack
-        }
-        else
-        {
-            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term2).getMemoryLocation());;
-        }                     
+        loadInteger(term1);
+        loadInteger(term2);                 
         
         Label falseLabel = new Label(); // label for if comparison output is false
-        Label trueLabel = new Label(); // label for if the comparison output is true
-        Label endLabel = new Label();
+        Label endLabel = new Label(); // label for the end of the comparison
 
         // Determine correct comparison operation and write to class
         String comparator = ctx.getChild(2).getText();
-        if(comparator.equals(">"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPGT, trueLabel);
-        }
-        else if(comparator.equals("<"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPLT, trueLabel);
-        }
-        else if(comparator.equals("="))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPEQ, trueLabel);
-        }
-        else if(comparator.equals("<>"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPNE, trueLabel);
-        }
-        mv.visitJumpInsn(Opcodes.GOTO, falseLabel); // will only be executed if the comparison returned false
+        writeCompareOperation(falseLabel, comparator); // call to helper method to write the correct comparison operation
 
-        mv.visitLabel(trueLabel);
-        visit(ctx.getChild(5)); // Visit what you would do if comparison returns true
-        mv.visitJumpInsn(Opcodes.GOTO, endLabel);
+        int childIndex = 5; // the fifth child is the first actual operation to do following comparison
+        while(!ctx.getChild(childIndex).getText().equals("ELSE"))
+        {
+            visit(ctx.getChild(childIndex)); // visit the child if it is not the else statement
+            childIndex++;
+        }
+        mv.visitJumpInsn(Opcodes.GOTO, endLabel); // skip over what you would do in the else statemtne and go to the endLabel
 
         mv.visitLabel(falseLabel);
         // If there is an else statement following, visit what you would do otherwise
-        if(ctx.getChild(6).getText().equals("ELSE"))
-            visit(ctx.getChild(7));
+        if(ctx.getChild(childIndex).getText().equals("ELSE"))
+        {
+            childIndex++;
+            while(!ctx.getChild(childIndex).getText().equals("ENDIF"))
+            {
+                visit(ctx.getChild(childIndex)); // visit the child if it is not the endif statement
+                childIndex++;
+            }
+        }
 
         mv.visitLabel(endLabel); // Label indicating end of comparison
-
         return null; 
-
     } // end visitDecision
 
 
     @Override
     /**
-     * Override of the visitLoop method contains logic to implement a loop using ASM
+     * Override of the visitLoop method contains logic to implement a while loop in bytecode using ASM
      */
     public T visitLoop(lexparse.KnightCodeParser.LoopContext ctx) 
     {    
-
         Label loopHeader = new Label();
         Label loopEnd = new Label();
-
 
         mv.visitLabel(loopHeader);
         // Load 2 values to be compared onto stack
         String term1 = ctx.getChild(1).getText();
         String term2 = ctx.getChild(3).getText();
-        if(!symbolTable.containsKey(term1))
-        {
-            mv.visitLdcInsn(Integer.parseInt(term1)); // load an explicit integer onto stack
-        }
-        else
-        {
-            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term1).getMemoryLocation()); // load a variable value onto stack
-        }
-        if(!symbolTable.containsKey(term2))
-        {
-            mv.visitLdcInsn(Integer.parseInt(term2)); // load an explicit integer onto stack
-        }
-        else
-        {
-            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term2).getMemoryLocation());;
-        }      
+        loadInteger(term1);
+        loadInteger(term2);
+
         // Determine correct comparison operation and write to class
         String comparator = ctx.getChild(2).getText();
-        if(comparator.equals(">"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPLE, loopEnd);
-        }
-        else if(comparator.equals("<"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPGE, loopEnd);
-        }
-        else if(comparator.equals("="))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPNE, loopEnd);
-        }
-        else if(comparator.equals("<>"))
-        {
-            mv.visitJumpInsn(Opcodes.IF_ICMPEQ, loopEnd);
-        }
+        writeCompareOperation(loopEnd, comparator); // call to helper method to write the correct comparison in bytecode
 
         visitChildren(ctx);
         mv.visitJumpInsn(Opcodes.GOTO, loopHeader); // if it gets here, then loop to top and do comparison again
 
-        
-        mv.visitLabel(loopEnd);
+        mv.visitLabel(loopEnd); // Label to visit when the loop should no longer run
         return null;
-    }
+    } // end visitLoop
 
 
-    // /**
-    //  * Helper function writes the correct comparison operation to the .class file assuming the two operands are loaded onto stack already
-    //  * @param trueLabel the label to visit if the comparison is true
-    //  * @param falseLabel the label to visit if the comparison is true
-    //  * @param comparator the string representing the comparison operator
-    //  */
-    // public void writeCompareOperation(Label trueLabel, Label falseLabel, String comparator)
-    // {
-    //     if(comparator.equals(">"))
-    //     {
-    //         mv.visitJumpInsn(Opcodes.IF_ICMPGT, trueLabel);
-    //     }
-    //     else if(comparator.equals("<"))
-    //     {
-    //         mv.visitJumpInsn(Opcodes.IF_ICMPLT, trueLabel);
-    //     }
-    //     else if(comparator.equals("="))
-    //     {
-    //         mv.visitJumpInsn(Opcodes.IF_ICMPEQ, trueLabel);
-    //     }
-    //     else if(comparator.equals("<>"))
-    //     {
-    //         mv.visitJumpInsn(Opcodes.IF_ICMPNE, trueLabel);
-    //     }
-    //     mv.visitJumpInsn(Opcodes.GOTO, falseLabel);
-    // }
+    /**
+     * Helper function writes the correct comparison operation to the .class file assuming the two operands are loaded onto stack already
+     * @param falseLabel the label to visit if the comparison returns false
+     * @param comparator the string representing the comparison operator
+     */
+    private void writeCompareOperation(Label falseLabel, String comparator)
+    {
+        // Inverse logic to go to the falselabel if the comparison is false
+        if(comparator.equals(">"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPLE, falseLabel);
+        }
+        else if(comparator.equals("<"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPGE, falseLabel);
+        }
+        else if(comparator.equals("="))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPNE, falseLabel);
+        }
+        else if(comparator.equals("<>"))
+        {
+            mv.visitJumpInsn(Opcodes.IF_ICMPEQ, falseLabel);
+        }
+    } // end writeCompareOperation
 
-    @Override public T visitStat(lexparse.KnightCodeParser.StatContext ctx) { return visit(ctx.getChild(0)); }
 
+    /**
+     * Helper method to load either an explicit integer onto the stack
+     * or the value of an integer variable onto the stack
+     * @param term the string representing the term; could be an identifier for an integer variable or a literal integer
+     */
+    private void loadInteger(String term)
+    {
+        // Determine if the term is an explicit integer or a variable and load it onto the stack
+        if(!symbolTable.containsKey(term))
+        {
+            mv.visitLdcInsn(Integer.parseInt(term)); // load an explicit integer onto stack
+        }
+        else
+        {
+            mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term).getMemoryLocation()); // load a variable value onto stack
+        }
+    } // end loadInteger
+    
+
+    /**
+     * Contains ASM code to write the footer of a .class file
+     */
+    public void writeFooter()
+    {
+        mv.visitInsn(Opcodes.RETURN);
+        mv.visitMaxs(0,10);
+        mv.visitEnd();
+    } // end writeFooter
+
+
+    /**
+     * Returns the ClassWriter as an array of bytes
+     * @return
+     */
+    public byte[] getByteArray()
+    {
+        return cw.toByteArray();
+    } // end getByteArray
 
 } // end class

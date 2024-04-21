@@ -14,13 +14,13 @@ package compiler;
 public class Variable
 {
 
-    //public T data; // the value of the variable
-    public String dataType; // the data type of the variable
+    public String dataType; // a string denoting the data type of the variable
     public int memoryLocation; // the memory location of the variable in bytecode
 
     /**
-     * Preferred constructor initializes a variable with 
-     * @param data
+     * Preferred constructor initializes a variable, allowing user to pass in a datatype and memory location
+     * @param type a string denoting the dataType of the variable
+     * @param memoryLocation the memory index of the variable in the bytecode
      */
     public Variable(String type, int memoryLocation)
     {
@@ -30,7 +30,7 @@ public class Variable
 
     /**
      * Getter for dataType
-     * @return
+     * @return the string denoting the data type of the variable
      */
     public String getDataType()
     {
@@ -39,7 +39,7 @@ public class Variable
 
     /**
      * Getter for memoryLocation
-     * @return
+     * @return the memory location of the variable in the bytecode
      */
     public int getMemoryLocation()
     {
