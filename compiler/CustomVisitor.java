@@ -392,7 +392,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
     @Override
     /**
-     * Override of the visitLoop method contains logic to implement a loop using ASM
+     * Override of the visitLoop method contains logic to implement a while loop using ASM
      */
     public T visitLoop(lexparse.KnightCodeParser.LoopContext ctx) 
     {    
@@ -413,8 +413,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         visitChildren(ctx);
         mv.visitJumpInsn(Opcodes.GOTO, loopHeader); // if it gets here, then loop to top and do comparison again
 
-        
-        mv.visitLabel(loopEnd);
+        mv.visitLabel(loopEnd); // Label to visit when the loop should no longer run
         return null;
     } // end visitLoop
 
@@ -449,7 +448,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
     /**
      * Helper method to load either an explicit integer onto the stack
      * or the value of an integer variable onto the stack
-     * @param term
+     * @param term the string representing the term; could be an identifier for an integer variable or a literal integer
      */
     public void loadInteger(String term)
     {
