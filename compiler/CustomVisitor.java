@@ -49,7 +49,8 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
 
     @Override
     /**
-     * Contains logic to declare a variable in bytecode using ASM
+     * Contains logic to declare a new variable in the symbol table
+     * Assigns its type and a memory location for later use
      */
     public T visitVariable(lexparse.KnightCodeParser.VariableContext ctx) 
     {
@@ -83,7 +84,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         {
             String val = ctx.getChild(3).getText();
 
-            // If val is not a single integer, visit children and perform necessary operations
+            // If val is not a single integer, visit children and perform necessary operations before storing result
             if(ctx.getChild(3).getChildCount() != 1)
             {
                 visit(ctx.getChild(3));
@@ -156,27 +157,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */ 
     public T visitAddition(lexparse.KnightCodeParser.AdditionContext ctx) 
     { 
-        // Load the first operand onto the stack (left subtree traversal)
-        if(ctx.getChild(0).getChildCount() == 1)
-        {
-            String operand1 = ctx.getChild(0).getText();
-            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
-        }
-        else 
-        {
-            visit(ctx.getChild(0)); // visits the left child recursively
-        }
-
-        // Load the second operand onto the stack (right subtree traversal)
-        if(ctx.getChild(2).getChildCount() == 1)
-        {
-            String operand2 = ctx.getChild(2).getText();
-            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
-        }
-        else 
-        {
-            visit(ctx.getChild(2)); // visits right child recursively
-        }
+        postorderTraversal(ctx); // call to helper method using postorder traversal to load two operands onto stack
 
         mv.visitInsn(Opcodes.IADD); // add two operands and have result on top of stack
         return null;
@@ -190,27 +171,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */
     public T visitMultiplication(lexparse.KnightCodeParser.MultiplicationContext ctx) 
     {
-        // Load the first operand onto the stack (left subtree traversal)
-        if(ctx.getChild(0).getChildCount() == 1)
-        {
-            String operand1 = ctx.getChild(0).getText();
-            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
-        }
-        else // visits the left child recursively
-        {
-            visit(ctx.getChild(0));
-        }
-
-        // Load the second operand onto the stack (right subtree traversal)
-        if(ctx.getChild(2).getChildCount() == 1)
-        {
-            String operand2 = ctx.getChild(2).getText();
-            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
-        }
-        else // visits right child recursively
-        {
-            visit(ctx.getChild(2));
-        }
+        postorderTraversal(ctx); // call to helper method using postorder traversal to load two operands onto stack
 
         mv.visitInsn(Opcodes.IMUL); // multiply two operands and have result on top of stack
         return null;
@@ -224,27 +185,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */
     public T visitSubtraction(lexparse.KnightCodeParser.SubtractionContext ctx)
     {
-        // Load the first operand onto the stack (left subtree traversal)
-        if(ctx.getChild(0).getChildCount() == 1)
-        {
-            String operand1 = ctx.getChild(0).getText();
-            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
-        }
-        else // visits the left child recursively
-        {
-            visit(ctx.getChild(0));
-        }
-
-        // Load the second operand onto the stack (right subtree traversal)
-        if(ctx.getChild(2).getChildCount() == 1)
-        {
-            String operand2 = ctx.getChild(2).getText();
-            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
-        }
-        else // visits right child recursively
-        {
-            visit(ctx.getChild(2));
-        }
+        postorderTraversal(ctx); // call to helper method using postorder traversal to load two operands onto stack
 
         mv.visitInsn(Opcodes.ISUB); // subtract two operands and have result on top of stack
         return null;
@@ -258,27 +199,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
      */
     public T visitDivision(lexparse.KnightCodeParser.DivisionContext ctx)
     {
-        // Load the first operand onto the stack (left subtree traversal)
-        if(ctx.getChild(0).getChildCount() == 1)
-        {
-            String operand1 = ctx.getChild(0).getText();
-            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
-        }
-        else // visits the left child recursively
-        {
-            visit(ctx.getChild(0));
-        }
-
-        // Load the second operand onto the stack (right subtree traversal)
-        if(ctx.getChild(2).getChildCount() == 1)
-        {
-            String operand2 = ctx.getChild(2).getText();
-            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
-        }
-        else // visits right child recursively
-        {
-            visit(ctx.getChild(2));
-        }
+        postorderTraversal(ctx); // call to helper method using postorder traversal to load two operands onto stack
 
         mv.visitInsn(Opcodes.IDIV); // subtract two operands and have result on top of stack
         return null;
@@ -438,8 +359,41 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         {
             mv.visitVarInsn(Opcodes.ILOAD, symbolTable.get(term).getMemoryLocation()); // load a variable value onto stack
         }
+        return;
     } // end loadInteger
     
+
+    /**
+     * Helper method that loads two operands onto the stack using a postorder traversal
+     * @param ctx the node to start the postorder traversal at
+     */
+    private void postorderTraversal(org.antlr.v4.runtime.ParserRuleContext ctx)
+    {
+        // Load the first operand onto the stack (left subtree traversal)
+        if(ctx.getChild(0).getChildCount() == 1)
+        {
+            String operand1 = ctx.getChild(0).getText();
+            loadInteger(operand1); // Check if first operand is a variable or literal integer and load onto stack
+        }
+        else 
+        {
+            visit(ctx.getChild(0)); // visits the left child recursively
+        }
+
+        // Load the second operand onto the stack (right subtree traversal)
+        if(ctx.getChild(2).getChildCount() == 1)
+        {
+            String operand2 = ctx.getChild(2).getText();
+            loadInteger(operand2); // Check if second operand is a variable or literal integer and load onto stack
+        }
+        else 
+        {
+            visit(ctx.getChild(2)); // visits right child recursively
+        }
+        
+        return;
+    } // end postorderTraversal
+
 
     /**
      * Contains ASM code to write the footer of a .class file
@@ -449,6 +403,7 @@ public class CustomVisitor<T> extends lexparse.KnightCodeBaseVisitor<T>
         mv.visitInsn(Opcodes.RETURN);
         mv.visitMaxs(0,10);
         mv.visitEnd();
+        return;
     } // end writeFooter
 
 
